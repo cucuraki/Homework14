@@ -15,7 +15,7 @@ class MainActivity : AppCompatActivity() {
     private val adapter: Adapter by lazy {
         Adapter()
     }
-    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
+    private val mainDispatcher: CoroutineDispatcher = Dispatchers.Main
     private val model:MyViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,7 +31,7 @@ class MainActivity : AppCompatActivity() {
         adapter.submitList(model.state.value)
     }
     private fun trigger(){
-        lifecycleScope.launch(defaultDispatcher){
+        lifecycleScope.launch(mainDispatcher){
             model.state.collect{
                 adapter.submitList(it)
             }
