@@ -2,40 +2,33 @@ package com.example.homework14
 
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
-import retrofit2.Response
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import java.lang.Exception
 
+typealias MyList = List<Data.Content>
 class MyViewModel : ViewModel() {
-    private lateinit var list: List<Data.Content>
-    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
-    private val _flaw = MutableStateFlow(listOf<Data.Content>())
-    val state: StateFlow<List<Data.Content>> = _flaw
-    fun getInfo() {
-        viewModelScope.launch(defaultDispatcher) {
-
-            val response = try {
-                RetrofitClient.service().getInfo()
-            } catch (e: Exception) {
-                e.toString()
+    val flow: Flow<Resource<MyList>> = flow {
+        emit(Resource.Load())
+        val state: Resource<MyList> = try {
+            val response = RetrofitClient.service().getInfo()
+            if (response.isSuccessful) {
+                Resource.Success(response.body()!!.content)
+            } else {
+                Resource.Error(response.errorBody().toString())
             }
-            when (response) {
-                is Response<*> -> {
-                    if (response.isSuccessful) {
-                        _flaw.value = (response.body() as Data).content
-                    }else{
-
-                    }
-                }
-                is String -> {
-
-                }
-            }
+        } catch (e: Exception) {
+            Resource.Error(e.toString())
         }
+        emit(state)
+
     }
+
+
+}
+
+sealed class Resource<T> {
+    data class Success<T>(val body: T) : Resource<T>()
+    data class Error<T>(val errorMessage: String) : Resource<T>()
+    class Load<T> : Resource<T>()
 }
